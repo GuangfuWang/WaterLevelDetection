@@ -147,6 +147,7 @@ WaterLevelDetection::WaterLevelDetection(){
 													Config::CANNY_L2);
 	}
 	m_line = new WaterLevelLine();
+	m_line->coord.resize(4);
 	m_line->coord = Config::LEVEL_LINE;
 }
 void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_lines)
@@ -208,6 +209,7 @@ void WaterLevelDetection::updateLine(int x0, int y0, int x1, int y1)
 		m_line = nullptr;
 	}
 	m_line = new WaterLevelLine();
+	m_line->coord.resize(4);
 	m_line->coord[0] = x0;
 	m_line->coord[1] = y0;
 	m_line->coord[2] = x1;
