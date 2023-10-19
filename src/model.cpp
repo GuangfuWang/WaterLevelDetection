@@ -55,10 +55,10 @@ void UpdateParams_Algorithm(cvModel *pModel){
 							   pModel->p[1].y);
 }
 void Process_Algorithm(cvModel *pModel, cv::Mat &input_frame){
-	int curr_res = 0;
 	auto model = reinterpret_cast<InferModel *>(pModel->iModel);
-	model->mDeploy->detect(input_frame, curr_res);
+	model->mDeploy->detect(input_frame, pModel->alarm);
 	model->mDeploy->draw(input_frame);
+
 }
 void Destroy_Algorithm(cvModel *pModel){
 	if (pModel->iModel){
