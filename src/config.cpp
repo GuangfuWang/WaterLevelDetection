@@ -10,7 +10,7 @@
 namespace water_level{
 
 std::string Config::VIDEO_FILE = "";
-std::vector<unsigned int> Config::LEVEL_LINE = {500,450,750,550};
+std::vector<unsigned int> Config::LEVEL_LINE = {500,480,800,575};
 unsigned int Config::LEVEL_COORD_Y = 300;
 float Config::LEVEL_ANGLE_THRESHOLD = 15.0f;
 unsigned int Config::LEVEL_LINE_DIFF = 5;

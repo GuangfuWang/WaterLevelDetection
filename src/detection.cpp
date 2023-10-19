@@ -11,10 +11,10 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 		std::vector<cv::Vec4i> res_lines;
 		if(m_mask.cols<1){
 			m_mask = cv::Mat::zeros(curr_img.rows/2,curr_img.cols/2,curr_img.type());
-			int yl = Config::LEVEL_LINE[1]/2-100/2;
+			int yl = m_line->coord[1]/2-100/2;
 			if (yl<=100)yl=100/2;
-			cv::rectangle(m_mask,cv::Rect(Config::LEVEL_LINE[0]/2-100/2,yl,
-										  Config::LEVEL_LINE[2]/2-Config::LEVEL_LINE[0]/2+200/2,
+			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,yl,
+										  m_line->coord[2]/2-m_line->coord[0]/2+200/2,
 										  550/2),
 						  cv::Scalar(255,255,255),-1);
 		}
@@ -33,7 +33,7 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_prev_detects.push_back(res_lines[0]);
 		}
 		if(m_single_cnt > Config::MOVING_LEN){
-			if(!isLower(m_prev_detects,Config::LEVEL_LINE)){
+			if(!isLower(m_prev_detects,m_line->coord)){
 				m_res++;
 			}//over the threshold line.
 			if(m_prev_detects.size()>2*Config::MOVING_LEN){
@@ -50,10 +50,10 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 		std::vector<cv::Vec4i> res_lines;
 		if(m_mask.cols<1){
 			m_mask = cv::Mat::zeros(curr_img.rows/2,curr_img.cols/2,curr_img.type());
-			int yl = Config::LEVEL_LINE[1]/2-100/2;
+			int yl = m_line->coord[1]/2-100/2;
 			if (yl<=100)yl=100/2;
-			cv::rectangle(m_mask,cv::Rect(Config::LEVEL_LINE[0]/2-100/2,yl,
-										  Config::LEVEL_LINE[2]/2-Config::LEVEL_LINE[0]/2+200/2,
+			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,yl,
+										  m_line->coord[2]/2-m_line->coord[0]/2+200/2,
 										  550/2),
 						  cv::Scalar(255,255,255),-1);
 		}
@@ -69,7 +69,7 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_prev_detects.push_back(res_lines[0]);
 		}
 		if(m_single_cnt > Config::MOVING_LEN){
-			if(!isLower(m_prev_detects,Config::LEVEL_LINE)){
+			if(!isLower(m_prev_detects,m_line->coord)){
 				m_res++;
 			}//over the threshold line.
 			if(m_prev_detects.size()>2*Config::MOVING_LEN){
@@ -127,7 +127,7 @@ void WaterLevelDetection::draw(cv::Mat &img)
 		}
 
 	}
-	auto t = Config::LEVEL_LINE;
+	auto t = m_line->coord;
 	cv::line(img,cv::Point(t[0],t[1]),cv::Point(t[2],t[3]),
 			 cv::Scalar(Config::DRAW_LINE_COLOR_THRES[2],
 						Config::DRAW_LINE_COLOR_THRES[1],
@@ -146,10 +146,12 @@ WaterLevelDetection::WaterLevelDetection(){
 													Config::CANNY_APPERTURE,
 													Config::CANNY_L2);
 	}
+	m_line = new WaterLevelLine();
+	m_line->coord = Config::LEVEL_LINE;
 }
 void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_lines)
 {
-	auto comp = Config::LEVEL_LINE;
+	auto comp = m_line->coord;
 	std::vector<cv::Vec4i> ret;
 	float min_t = 180;
 	for (auto & i:detected_lines) {
@@ -193,5 +195,22 @@ bool WaterLevelDetection::isLower(std::vector<cv::Vec4i> &lines,
 }
 
 
-WaterLevelDetection::~WaterLevelDetection() = default;
+WaterLevelDetection::~WaterLevelDetection(){
+	if (m_line){
+		delete m_line;
+		m_line = nullptr;
+	}
+}
+void WaterLevelDetection::updateLine(int x0, int y0, int x1, int y1)
+{
+	if (m_line){
+		delete m_line;
+		m_line = nullptr;
+	}
+	m_line = new WaterLevelLine();
+	m_line->coord[0] = x0;
+	m_line->coord[1] = y0;
+	m_line->coord[2] = x1;
+	m_line->coord[3] = y1;
+}
 }

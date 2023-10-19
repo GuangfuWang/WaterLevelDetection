@@ -3,6 +3,7 @@
 #include "config.h"
 #include <string>
 #include <iostream>
+#include <cuda_runtime_api.h>
 
 namespace water_level{
 
@@ -24,10 +25,10 @@ static void *GenModel() {
 
 cvModel* Allocate_Algorithm(cv::Mat &input_frame, int algID, int gpuID){
 	std::string file;
-	if(Util::checkFileExist("./config.yaml"))
-		file = "./config.yaml";
-	else if(Util::checkFileExist("../config/config.yaml")){
-		file = "../config/config.yaml";
+	if(Util::checkFileExist("./water_level.yaml"))
+		file = "./water_level.yaml";
+	else if(Util::checkFileExist("../config/water_level.yaml")){
+		file = "../config/water_level.yaml";
 	}else{
 		std::cerr<<"Cannot find YAML file!"<<std::endl;
 	}
@@ -39,13 +40,19 @@ cvModel* Allocate_Algorithm(cv::Mat &input_frame, int algID, int gpuID){
 	ptr->width = input_frame.cols;
 	ptr->height = input_frame.rows;
 	ptr->iModel = GenModel();
+	cudaSetDevice(gpuID);
 	return ptr;
 }
 void SetPara_Algorithm(cvModel *pModel,int algID){
 
 }
 void UpdateParams_Algorithm(cvModel *pModel){
-
+	if(pModel->p[1].x<=0||pModel->p[1].y<=0)return;
+	auto model = reinterpret_cast<InferModel *>(pModel->iModel);
+	model->mDeploy->updateLine(pModel->p[0].x,
+							   pModel->p[0].y,
+							   pModel->p[1].x,
+							   pModel->p[1].y);
 }
 void Process_Algorithm(cvModel *pModel, cv::Mat &input_frame){
 	int curr_res = 0;

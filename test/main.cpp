@@ -5,7 +5,7 @@
 using namespace water_level;
 
 int main(int argc, char** argv){
-	Config::LoadConfigFile(argc, argv, "../config/config.yaml");
+	Config::LoadConfigFile(argc, argv, "../config/water_level.yaml");
 //	SharedRef<WaterLevelDetection> wd = createSharedRef<WaterLevelDetection>();
 	//prepare the input data.
 	auto in_path = std::filesystem::path(Config::VIDEO_FILE);
@@ -20,6 +20,7 @@ int main(int argc, char** argv){
 	cv::Mat img;
 
 	std::vector<cv::Mat> whole;
+	whole.reserve(cap.get(cv::CAP_PROP_FRAME_COUNT));
 	while (cap.read(img)) {
 		whole.emplace_back(img.clone());
 	}
