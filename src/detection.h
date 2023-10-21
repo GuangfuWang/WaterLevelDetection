@@ -13,7 +13,7 @@ typedef struct{
 class WaterLevelDetection final
 {
 public:
-	WaterLevelDetection();
+	explicit WaterLevelDetection(int device = 0);
 	~WaterLevelDetection();
 
 	void detect(cv::Mat &curr_img, int &res);

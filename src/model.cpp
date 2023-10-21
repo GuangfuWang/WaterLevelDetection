@@ -9,8 +9,8 @@ namespace water_level{
 
 class InferModel {
 public:
-	InferModel() {
-		mDeploy = createSharedRef<WaterLevelDetection>();
+	explicit InferModel(int device) {
+		mDeploy = createSharedRef<WaterLevelDetection>(device);
 	}
 public:
 	SharedRef<WaterLevelDetection> mDeploy;
@@ -18,8 +18,8 @@ public:
 //	std::vector<cv::Mat> mSampled;
 };
 
-static void *GenModel() {
-	InferModel *model = new InferModel();
+static void *GenModel(int device) {
+	auto *model = new InferModel(device);
 	return reinterpret_cast<void *>(model);
 }
 
@@ -39,8 +39,8 @@ cvModel* Allocate_Algorithm(cv::Mat &input_frame, int algID, int gpuID){
 	ptr->countNum = 0;
 	ptr->width = input_frame.cols;
 	ptr->height = input_frame.rows;
-	ptr->iModel = GenModel();
-	cudaSetDevice(gpuID);
+	ptr->iModel = GenModel(gpuID);
+//	cudaSetDevice(gpuID);
 	return ptr;
 }
 void SetPara_Algorithm(cvModel *pModel,int algID){
