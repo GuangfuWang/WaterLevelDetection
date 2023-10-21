@@ -137,6 +137,7 @@ void WaterLevelDetection::draw(cv::Mat &img)
 }
 WaterLevelDetection::WaterLevelDetection(int device){
 	if(Config::USE_GPU){
+		cv::cuda::setDevice(device);
 		m_gpu_detector = cv::cuda::createHoughSegmentDetector(Config::HOUGH_RHO,
 															Config::HOUGH_THETA,
 															Config::HOUGH_MIN_LEN,
@@ -150,7 +151,7 @@ WaterLevelDetection::WaterLevelDetection(int device){
 	m_line = new WaterLevelLine();
 	m_line->coord.resize(4);
 	m_line->coord = Config::LEVEL_LINE;
-	cv::cuda::setDevice(device);
+
 }
 void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_lines)
 {
