@@ -20,7 +20,7 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 		}
 		cv::resize(curr_img,curr_img,cv::Size(),0.5,0.5);
 		curr_img.copyTo(d_img,m_mask);
-
+		res_lines.reserve(10);
 		cv::cuda::GpuMat curr(d_img);
 		detectWithGPU(curr,res_lines);
 		removeUnrelatedLines(res_lines);
@@ -99,6 +99,7 @@ void WaterLevelDetection::detectWithGPU(cv::cuda::GpuMat &curr_img,
 	//detect lines.
 	m_gpu_detector->detect(edges,hough_lines);
 	//get result.
+//	lines.resize(1);
 	if(!hough_lines.empty()){
 		lines.resize(hough_lines.cols);
 		cv::Mat h_lines(1,hough_lines.cols,CV_32SC4,&lines[0]);
