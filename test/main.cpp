@@ -21,22 +21,22 @@ int main(int argc, char** argv){
 
 	std::vector<cv::Mat> whole;
 	whole.reserve(cap.get(cv::CAP_PROP_FRAME_COUNT));
-	while (cap.read(img)) {
-		whole.emplace_back(img.clone());
+	bool init  = false;
+	cvModel *model = nullptr;
+	while (cap.isOpened()) {
+		cap.read(img);
+		if(img.rows==0||img.cols==0)break;
+		if(!init){
+			model = Allocate_Algorithm(img,0,0);
+			SetPara_Algorithm(model,0);
+			UpdateParams_Algorithm(model);
+		}
+		Process_Algorithm(model,img);
+		vw.write(img.clone());
 	}
-	int res = 0;
-	auto model = Allocate_Algorithm(whole[0],0,0);
-	SetPara_Algorithm(model,0);
-	UpdateParams_Algorithm(model);
-	std::vector<cv::Mat> infer;
-	for (auto each: whole) {
-		Process_Algorithm(model,each);
-		infer.push_back(each.clone());
-	}
+	cap.release();
+	vw.release();
 	Destroy_Algorithm(model);
-	for (auto &f: infer) {
-		vw.write(f);
-	}
 
 	return 0;
 }
