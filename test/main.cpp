@@ -30,6 +30,7 @@ int main(int argc, char** argv){
 			model = Allocate_Algorithm(img,0,0);
 			SetPara_Algorithm(model,0);
 			UpdateParams_Algorithm(model);
+			init = true;
 		}
 		Process_Algorithm(model,img);
 		vw.write(img.clone());
