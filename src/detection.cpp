@@ -13,7 +13,7 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_mask = cv::Mat::zeros(curr_img.rows/2,curr_img.cols/2,curr_img.type());
 			int yl = m_line->coord[1]/2-100/2;
 			if (yl<=100)yl=100/2;
-			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,yl,
+			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,200,
 										  m_line->coord[2]/2-m_line->coord[0]/2+200/2,
 										  550/2),
 						  cv::Scalar(255,255,255),-1);
@@ -52,7 +52,7 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_mask = cv::Mat::zeros(curr_img.rows/2,curr_img.cols/2,curr_img.type());
 			int yl = m_line->coord[1]/2-100/2;
 			if (yl<=100)yl=100/2;
-			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,yl,
+			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,200,
 										  m_line->coord[2]/2-m_line->coord[0]/2+200/2,
 										  550/2),
 						  cv::Scalar(255,255,255),-1);
@@ -94,6 +94,11 @@ void WaterLevelDetection::detectWithGPU(cv::cuda::GpuMat &curr_img,
 	cv::cuda::GpuMat img;
 	cv::Mat final_line;
 	cv::cuda::cvtColor(curr_img,img,cv::COLOR_BGR2GRAY);
+	cv::cuda::equalizeHist(img,img);
+	cv::Ptr<cv::cuda::CLAHE> clahe = cv::cuda::createCLAHE();
+	clahe->setClipLimit(5);
+	clahe->setTilesGridSize(cv::Size(5, 5));
+	clahe->apply(img,img);
 	//detect edges.
 	m_canny->detect(img,edges);
 	//detect lines.

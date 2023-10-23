@@ -1,9 +1,9 @@
 DATA:
-  VIDEO_FILE: "/home/wgf/Downloads/QingShuiBengFang2.mp4"
+  VIDEO_FILE: "/home/wgf/Downloads/datasets/water-level/2023-10-22/15-51-28.mp4"
 
 METHOD:
-  LEVEL_LINE: [500,480,800,575]
-  LEVEL_ANGLE_THRESHOLD: 0.3 # in radians
+  LEVEL_LINE: [500,780,800,900]
+  LEVEL_ANGLE_THRESHOLD: 0.5 # in radians
   LEVEL_COORD_Y: 300
   LEVEL_LINE_DIFF: 5
   ENABLE_MOVING_AVERAGE: True

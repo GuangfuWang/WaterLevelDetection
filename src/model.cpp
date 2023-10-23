@@ -3,7 +3,6 @@
 #include "config.h"
 #include <string>
 #include <iostream>
-#include <cuda_runtime_api.h>
 
 namespace water_level{
 
@@ -14,8 +13,6 @@ public:
 	}
 public:
 	SharedRef<WaterLevelDetection> mDeploy;
-//	std::vector<int> res;
-//	std::vector<cv::Mat> mSampled;
 };
 
 static void *GenModel(int device) {
