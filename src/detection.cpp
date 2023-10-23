@@ -198,7 +198,7 @@ bool WaterLevelDetection::isLower(std::vector<cv::Vec4i> &lines,
 			cnt++;
 		}
 	}
-	if(cnt>m_config->MOVING_LEN*0.4f){
+	if(cnt>m_config->MOVING_LEN*0.6f){
 		return true;
 	}
 	return false;
