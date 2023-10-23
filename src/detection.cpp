@@ -7,14 +7,14 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 {
 	cv::Mat d_img;
 	res = 0;
-	if (Config::USE_GPU){
+	if (m_config->USE_GPU){
 		std::vector<cv::Vec4i> res_lines;
 		if(m_mask.cols<1){
 			m_mask = cv::Mat::zeros(curr_img.rows/2,curr_img.cols/2,curr_img.type());
 			int yl = m_line->coord[1]/2-100/2;
 			if (yl<=100)yl=100/2;
 			cv::rectangle(m_mask,cv::Rect(m_line->coord[0]/2-100/2,200,
-										  m_line->coord[2]/2-m_line->coord[0]/2+200/2,
+										  m_line->coord[2]/2-m_line->coord[0]/2+100/2,
 										  550/2),
 						  cv::Scalar(255,255,255),-1);
 		}
@@ -32,13 +32,13 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_single_cnt++;
 			m_prev_detects.push_back(res_lines[0]);
 		}
-		if(m_single_cnt > Config::MOVING_LEN){
+		if(m_single_cnt > m_config->MOVING_LEN){
 			if(!isLower(m_prev_detects,m_line->coord)){
 				m_res++;
 			}//over the threshold line.
-			if(m_prev_detects.size()>2*Config::MOVING_LEN){
+			if(m_prev_detects.size()>2*m_config->MOVING_LEN){
 				auto it = m_prev_detects.begin();
-				for (int i = 0; i < Config::MOVING_LEN/2; ++i) {
+				for (int i = 0; i < m_config->MOVING_LEN/2; ++i) {
 					m_prev_detects.erase(it);
 					it++;
 				}
@@ -68,13 +68,13 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_single_cnt++;
 			m_prev_detects.push_back(res_lines[0]);
 		}
-		if(m_single_cnt > Config::MOVING_LEN){
+		if(m_single_cnt > m_config->MOVING_LEN){
 			if(!isLower(m_prev_detects,m_line->coord)){
 				m_res++;
 			}//over the threshold line.
-			if(m_prev_detects.size()>2*Config::MOVING_LEN){
+			if(m_prev_detects.size()>2*m_config->MOVING_LEN){
 				auto it = m_prev_detects.begin();
-				for (int i = 0; i < Config::MOVING_LEN/2; ++i) {
+				for (int i = 0; i < m_config->MOVING_LEN/2; ++i) {
 					m_prev_detects.erase(it);
 					it++;
 				}
@@ -123,39 +123,40 @@ void WaterLevelDetection::draw(cv::Mat &img)
 		cv::line(img, cv::Point(2*l[0], 2*l[1]), cv::Point(2*l[2], 2*l[3]),
 					 cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 		if(m_res_cnt){
-			cv::putText(img,Config::POST_TEXT, cv::Point(Config::TEXT_OFFSET_X,
-														 Config::TEXT_OFFSET_Y),
-						cv::FONT_HERSHEY_PLAIN, Config::TEXT_FONT_SIZE,
-						cv::Scalar(Config::TEXT_LINE_COLOR[2],
-								   Config::TEXT_LINE_COLOR[1], Config::TEXT_LINE_COLOR[0]),
-						(int) Config::TEXT_LINE_WIDTH);
+//			cv::putText(img,m_config->POST_TEXT, cv::Point(m_config->TEXT_OFFSET_X,
+//														 m_config->TEXT_OFFSET_Y),
+//						cv::FONT_HERSHEY_PLAIN, m_config->TEXT_FONT_SIZE,
+//						cv::Scalar(m_config->TEXT_LINE_COLOR[2],
+//								   m_config->TEXT_LINE_COLOR[1], m_config->TEXT_LINE_COLOR[0]),
+//						(int) m_config->TEXT_LINE_WIDTH);
 			m_res_cnt--;
 		}
 
 	}
 	auto t = m_line->coord;
 	cv::line(img,cv::Point(t[0],t[1]),cv::Point(t[2],t[3]),
-			 cv::Scalar(Config::DRAW_LINE_COLOR_THRES[2],
-						Config::DRAW_LINE_COLOR_THRES[1],
-						Config::DRAW_LINE_COLOR_THRES[0]),
-			 Config::DRAW_LINE_WIDTH);
+			 cv::Scalar(m_config->DRAW_LINE_COLOR_THRES[2],
+						m_config->DRAW_LINE_COLOR_THRES[1],
+						m_config->DRAW_LINE_COLOR_THRES[0]),
+			 m_config->DRAW_LINE_WIDTH);
 }
-WaterLevelDetection::WaterLevelDetection(int device){
-	if(Config::USE_GPU){
+WaterLevelDetection::WaterLevelDetection(SharedRef<Config>& config, int device){
+	m_config = config;
+	if(m_config->USE_GPU){
 		cv::cuda::setDevice(device);
-		m_gpu_detector = cv::cuda::createHoughSegmentDetector(Config::HOUGH_RHO,
-															Config::HOUGH_THETA,
-															Config::HOUGH_MIN_LEN,
-															Config::HOUGH_MAX_LINE_GAP,
-															Config::HOUGH_MAX_LINES);
-		m_canny = cv::cuda::createCannyEdgeDetector(Config::CANNY_LOW_THRES,
-													Config::CANNY_HIGH_THRES,
-													Config::CANNY_APPERTURE,
-													Config::CANNY_L2);
+		m_gpu_detector = cv::cuda::createHoughSegmentDetector(m_config->HOUGH_RHO,
+															m_config->HOUGH_THETA,
+															m_config->HOUGH_MIN_LEN,
+															m_config->HOUGH_MAX_LINE_GAP,
+															m_config->HOUGH_MAX_LINES);
+		m_canny = cv::cuda::createCannyEdgeDetector(m_config->CANNY_LOW_THRES,
+													m_config->CANNY_HIGH_THRES,
+													m_config->CANNY_APPERTURE,
+													m_config->CANNY_L2);
 	}
 	m_line = new WaterLevelLine();
 	m_line->coord.resize(4);
-	m_line->coord = Config::LEVEL_LINE;
+	m_line->coord = m_config->LEVEL_LINE;
 
 }
 void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_lines)
@@ -183,7 +184,7 @@ bool WaterLevelDetection::isLower(std::vector<cv::Vec4i> &lines,
 								  std::vector<unsigned int> &thres)
 {
 	int cnt = 0;
-	for (int i=lines.size()-1;i>lines.size()-1-Config::MOVING_LEN&&i>=0;i--) {
+	for (int i=lines.size()-1;i>lines.size()-1-m_config->MOVING_LEN&&i>=0;i--) {
 		if(lines[i][0]>lines[i][2]){
 			std::swap(lines[i][1],lines[i][3]);
 			std::swap(lines[i][0],lines[i][2]);
@@ -197,7 +198,7 @@ bool WaterLevelDetection::isLower(std::vector<cv::Vec4i> &lines,
 			cnt++;
 		}
 	}
-	if(cnt>Config::MOVING_LEN*0.4f){
+	if(cnt>m_config->MOVING_LEN*0.4f){
 		return true;
 	}
 	return false;

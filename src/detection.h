@@ -1,11 +1,13 @@
 #pragma once
 #include "util.h"
+#include "config.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/cudaimgproc.hpp>
 
 namespace water_level
 {
+
 typedef struct{
 	std::vector<unsigned int> coord;
 } WaterLevelLine;
@@ -13,7 +15,7 @@ typedef struct{
 class WaterLevelDetection final
 {
 public:
-	explicit WaterLevelDetection(int device = 0);
+	explicit WaterLevelDetection(SharedRef<Config>& config, int device = 0);
 	~WaterLevelDetection();
 
 	void detect(cv::Mat &curr_img, int &res);
@@ -23,7 +25,7 @@ private:
 	void detectWithGPU(cv::cuda::GpuMat &curr_img, std::vector<cv::Vec4i> &lines);
 	void detectWithCPU(cv::Mat &curr_img, std::vector<cv::Vec4i> &lines);
 	void removeUnrelatedLines(std::vector<cv::Vec4i>& detected_lines);
-	static bool isLower(std::vector<cv::Vec4i>& lines,std::vector<unsigned int>& thres);
+	bool isLower(std::vector<cv::Vec4i>& lines,std::vector<unsigned int>& thres);
 
 private:
 	std::vector<cv::Vec4i> m_prev_detects;
@@ -31,6 +33,7 @@ private:
 	cv::Ptr<cv::cuda::HoughSegmentDetector> m_gpu_detector;
 	cv::Ptr<cv::cuda::CannyEdgeDetector> m_canny;
 	WaterLevelLine *m_line = nullptr;
+	SharedRef<Config> m_config = nullptr;
 	cv::Mat m_mask;
 	int m_single_cnt = 0;
 	int m_multi_cnt = 0;

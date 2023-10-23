@@ -8,15 +8,15 @@ namespace water_level{
 
 class InferModel {
 public:
-	explicit InferModel(int device) {
-		mDeploy = createSharedRef<WaterLevelDetection>(device);
+	explicit InferModel(int device,SharedRef<Config>& config) {
+		mDeploy = createSharedRef<WaterLevelDetection>(config,device);
 	}
 public:
 	SharedRef<WaterLevelDetection> mDeploy;
 };
 
-static void *GenModel(int device) {
-	auto *model = new InferModel(device);
+static void *GenModel(int device,SharedRef<Config>& config) {
+	auto *model = new InferModel(device,config);
 	return reinterpret_cast<void *>(model);
 }
 
@@ -29,14 +29,14 @@ cvModel* Allocate_Algorithm(cv::Mat &input_frame, int algID, int gpuID){
 	}else{
 		std::cerr<<"Cannot find YAML file!"<<std::endl;
 	}
-	Config::LoadConfigFile(1, nullptr, file);
+	auto config = createSharedRef<Config>(1, nullptr,file);
 	auto *ptr = new cvModel();
 	ptr->FrameNum = 0;
 	ptr->Frameinterval = 0;
 	ptr->countNum = 0;
 	ptr->width = input_frame.cols;
 	ptr->height = input_frame.rows;
-	ptr->iModel = GenModel(gpuID);
+	ptr->iModel = GenModel(gpuID,config);
 //	cudaSetDevice(gpuID);
 	return ptr;
 }
