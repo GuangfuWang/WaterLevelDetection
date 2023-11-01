@@ -5,10 +5,10 @@
 using namespace water_level;
 
 int main(int argc, char** argv){
-	Config::LoadConfigFile(argc, argv, "../config/water_level.yaml");
+//	Config::LoadConfigFile(argc, argv, "../config/water_level.yaml");
 //	SharedRef<WaterLevelDetection> wd = createSharedRef<WaterLevelDetection>();
 	//prepare the input data.
-	auto in_path = std::filesystem::path(Config::VIDEO_FILE);
+	auto in_path = std::filesystem::path("/home/wgf/Downloads/datasets/water-level/2023-10-22/16-07-43.mp4");
 	cv::VideoCapture cap(in_path);
 	cv::VideoWriter vw;
 	std::filesystem::path output_path = in_path.parent_path() / (in_path.stem().string() + ".result.mp4");

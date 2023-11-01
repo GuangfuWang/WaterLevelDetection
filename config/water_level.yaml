@@ -1,5 +1,5 @@
 DATA:
-  VIDEO_FILE: "/home/wgf/Downloads/datasets/water-level/2023-10-22/15-51-28.mp4"
+  VIDEO_FILE: "/home/wgf/Downloads/datasets/water-level/2023-10-22/15-55-32.mp4"
 
 METHOD:
   LEVEL_LINE: [500,780,800,900]
