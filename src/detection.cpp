@@ -199,8 +199,8 @@ void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_
 					k /= delta_x;
 					auto b = m_prev_detects[i][1] - k * m_prev_detects[i][0];
 					auto sk = std::sqrt(1 + k * k);
-					auto d1 = std::abs(b + curr_line[1] - k * curr_line[0]) / sk;
-					auto d2 = std::abs(b + curr_line[3] - k * curr_line[2]) / sk;
+					auto d1 = std::abs(b - curr_line[1] + k * curr_line[0]) / sk;
+					auto d2 = std::abs(b - curr_line[3] + k * curr_line[2]) / sk;
 					if (d1 + d2 > 80)flag = false;//magic number, do not ask why.
 				}
 				else continue;

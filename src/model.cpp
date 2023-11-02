@@ -55,6 +55,7 @@ void Process_Algorithm(cvModel *pModel, cv::Mat &input_frame){
 	auto model = reinterpret_cast<InferModel *>(pModel->iModel);
 	model->mDeploy->detect(input_frame, pModel->alarm);
 	model->mDeploy->draw(input_frame);
+	if(pModel->alarm)std::cout<<"Detected!"<<std::endl;
 
 }
 void Destroy_Algorithm(cvModel *pModel){
