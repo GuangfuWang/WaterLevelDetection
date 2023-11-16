@@ -14,8 +14,8 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 			m_mask = cv::Mat::zeros(curr_img.rows / 2, curr_img.cols / 2, curr_img.type());
 			int yl = m_line->coord[1] / 2 - 100 / 2;
 			if (yl <= 100)yl = 100 / 2;
-			cv::rectangle(m_mask, cv::Rect(m_line->coord[0] / 2 - 100 / 2, 200,
-										   m_line->coord[2] / 2 - m_line->coord[0] / 2 + 100 / 2,
+			cv::rectangle(m_mask, cv::Rect(m_line->coord[0] / 2 , 200,
+										   m_line->coord[2] / 2 - m_line->coord[0] / 2,
 										   550 / 2),
 						  cv::Scalar(255, 255, 255), -1);
 		}
@@ -192,22 +192,17 @@ void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_
 		if (m_prev_detects.size() > m_config->MOVING_LEN) {
 			auto curr_line = ret[ret.size() - 1];
 			bool flag = true;
-			for (int i = m_prev_detects.size() - 1; i >= 0 && i > m_prev_detects.size() - 3; i--) {
-				auto delta_x = m_prev_detects[i][0] - m_prev_detects[i][2];
-				if (std::abs(delta_x) > 0.001f) {
-					float k = m_prev_detects[i][1] - m_prev_detects[i][3];
-					k /= delta_x;
-					auto b = m_prev_detects[i][1] - k * m_prev_detects[i][0];
-					auto sk = std::sqrt(1 + k * k);
-					auto d1 = std::abs(b - curr_line[1] + k * curr_line[0]) / sk;
-					auto d2 = std::abs(b - curr_line[3] + k * curr_line[2]) / sk;
-					if (d1 + d2 > 40)flag = false;//magic number, do not ask why.
+			float mean = 0.0f;
+			compareWithPrevDetects(curr_line,flag,mean);
+//			if(ret.size()==1){
+				if (flag) {
+					detected_lines.push_back(curr_line);
 				}
-				else continue;
-			}
-			if (flag) {
-				detected_lines.push_back(curr_line);
-			}
+//			}
+//			else if(ret.size()==2){
+
+//			}
+
 		}else detected_lines.push_back(ret[ret.size() - 1]);
 	}
 	else detected_lines.clear();
@@ -255,5 +250,30 @@ void WaterLevelDetection::updateLine(int x0, int y0, int x1, int y1)
 	m_line->coord[1] = y0;
 	m_line->coord[2] = x1;
 	m_line->coord[3] = y1;
+}
+void WaterLevelDetection::compareWithPrevDetects(const cv::Vec4i &c,
+												 bool &res,float& sum)
+{
+	if(m_prev_detects.empty())return;
+	res = true;
+	sum = 0.0f;
+	int cnt = 0;
+	for (int i = m_prev_detects.size() - 1; i >= 0 && i > m_prev_detects.size() - 3; i--) {
+		auto delta_x = m_prev_detects[i][0] - m_prev_detects[i][2];
+		if (std::abs(delta_x) > 0.001f) {
+			float k = m_prev_detects[i][1] - m_prev_detects[i][3];
+			k /= delta_x;
+			auto b = m_prev_detects[i][1] - k * m_prev_detects[i][0];
+			auto sk = std::sqrt(1 + k * k);
+			auto d1 = std::abs(b - c[1] + k * c[0]) / sk;
+			auto d2 = std::abs(b - c[3] + k * c[2]) / sk;
+			if (d1 + d2 > 40)res = false;//
+			cnt++;
+			sum = sum+d1+d2;
+		}
+		else continue;
+	}
+	sum/=cnt;
+
 }
 }

@@ -26,6 +26,7 @@ private:
 	void detectWithCPU(cv::Mat &curr_img, std::vector<cv::Vec4i> &lines);
 	void removeUnrelatedLines(std::vector<cv::Vec4i>& detected_lines);
 	bool isLower(std::vector<cv::Vec4i>& lines,std::vector<unsigned int>& thres);
+	void compareWithPrevDetects(const cv::Vec4i& c,bool & res,float& sum);
 
 private:
 	std::vector<cv::Vec4i> m_prev_detects;
