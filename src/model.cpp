@@ -50,6 +50,7 @@ void UpdateParams_Algorithm(cvModel *pModel){
 							   pModel->p[0].y,
 							   pModel->p[1].x,
 							   pModel->p[1].y);
+	model->mDeploy->reset();
 }
 void Process_Algorithm(cvModel *pModel, cv::Mat &input_frame){
 	auto model = reinterpret_cast<InferModel *>(pModel->iModel);

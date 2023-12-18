@@ -1,8 +1,25 @@
+#include <driver_types.h>
 #include "detection.h"
 #include "config.h"
 
 namespace water_level
 {
+
+inline cv::Vec4i getLen(const std::vector<cv::Vec4i>& dets){
+	std::vector<float> lens(dets.size(),0.0f);
+	for (int i = 0; i < dets.size(); ++i) {
+		lens[i]=std::pow(dets[i][0]-dets[i][2],2)+std::pow(dets[i][1]-dets[i][3],2);
+	}
+	float max_value = 0.0f;
+	int idx=0;
+	for (int i = 0; i < dets.size(); ++i) {
+		if(lens[i]>max_value){
+			max_value = lens[i];
+			idx = i;
+		}
+	}
+	return dets[idx];
+}
 
 void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 {
@@ -22,7 +39,8 @@ void WaterLevelDetection::detect(cv::Mat &curr_img, int &res)
 		cv::resize(curr_img, curr_img, cv::Size(), 0.5, 0.5);
 		curr_img.copyTo(d_img, m_mask);
 		res_lines.reserve(10);
-		cv::cuda::GpuMat curr(d_img);
+		cv::cuda::GpuMat curr;
+		curr.upload(d_img,m_stream);
 		detectWithGPU(curr, res_lines);
 		removeUnrelatedLines(res_lines);
 		cv::resize(curr_img, curr_img, cv::Size(), 2.0, 2.0);
@@ -105,22 +123,27 @@ void WaterLevelDetection::detectWithGPU(cv::cuda::GpuMat &curr_img,
 	cv::cuda::GpuMat edges;
 	cv::cuda::GpuMat img;
 	cv::Mat final_line;
-	cv::cuda::cvtColor(curr_img, img, cv::COLOR_BGR2GRAY);
-	cv::cuda::equalizeHist(img, img);
-	cv::Ptr<cv::cuda::CLAHE> clahe = cv::cuda::createCLAHE();
-	clahe->setClipLimit(5);
-	clahe->setTilesGridSize(cv::Size(5, 5));
-	clahe->apply(img, img);
+	cv::cuda::cvtColor(curr_img, img, cv::COLOR_BGR2GRAY,0,m_stream);
+	cv::cuda::equalizeHist(img, img,m_stream);
+	if(!clahe){
+		clahe = cv::cuda::createCLAHE();
+		clahe->setClipLimit(5);
+		clahe->setTilesGridSize(cv::Size(5, 5));
+	}
+	clahe->apply(img, img,m_stream);
 	//detect edges.
-	m_canny->detect(img, edges);
+	m_canny->detect(img, edges,m_stream);
 	//detect lines.
-	m_gpu_detector->detect(edges, hough_lines);
+	m_gpu_detector->detect(edges, hough_lines,m_stream);
 	//get result.
 //	lines.resize(1);
 	if (!hough_lines.empty()) {
 		lines.resize(hough_lines.cols);
+//		cv::Mat::setDefaultAllocator(cv::cuda::HostMem::getAllocator (cv::cuda::HostMem::AllocType::PAGE_LOCKED));
 		cv::Mat h_lines(1, hough_lines.cols, CV_32SC4, &lines[0]);
-		hough_lines.download(h_lines);
+//		cv::cuda::registerPageLocked(h_lines);
+		hough_lines.download(h_lines,m_stream);
+		m_stream.waitForCompletion();
 	}
 }
 void WaterLevelDetection::detectWithCPU(cv::Mat &curr_img,
@@ -135,12 +158,6 @@ void WaterLevelDetection::draw(cv::Mat &img)
 		cv::line(img, cv::Point(2 * l[0], 2 * l[1]), cv::Point(2 * l[2], 2 * l[3]),
 				 cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 		if (m_res_cnt) {
-//			cv::putText(img,m_config->POST_TEXT, cv::Point(m_config->TEXT_OFFSET_X,
-//														 m_config->TEXT_OFFSET_Y),
-//						cv::FONT_HERSHEY_PLAIN, m_config->TEXT_FONT_SIZE,
-//						cv::Scalar(m_config->TEXT_LINE_COLOR[2],
-//								   m_config->TEXT_LINE_COLOR[1], m_config->TEXT_LINE_COLOR[0]),
-//						(int) m_config->TEXT_LINE_WIDTH);
 			m_res_cnt--;
 		}
 
@@ -170,6 +187,7 @@ WaterLevelDetection::WaterLevelDetection(SharedRef<Config> &config, int device)
 	m_line = new WaterLevelLine();
 	m_line->coord.resize(4);
 	m_line->coord = m_config->LEVEL_LINE;
+	m_stream = cv::cuda::Stream(cudaStreamNonBlocking);
 
 }
 void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_lines)
@@ -190,7 +208,7 @@ void WaterLevelDetection::removeUnrelatedLines(std::vector<cv::Vec4i> &detected_
 	if (ret.size()) {
 		detected_lines.clear();
 		if (m_prev_detects.size() > m_config->MOVING_LEN) {
-			auto curr_line = ret[ret.size() - 1];
+			auto curr_line = getLen(ret);
 			bool flag = true;
 			float mean = 0.0f;
 			compareWithPrevDetects(curr_line,flag,mean);
